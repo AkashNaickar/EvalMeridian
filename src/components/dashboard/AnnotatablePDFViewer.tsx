@@ -9,8 +9,9 @@ import { cn } from "@/lib/utils";
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// Use the stable .mjs worker from CDN for maximum rendering reliability
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Use the local worker for maximum reliability and compatibility with Next.js Turbopack
+// The worker file has been copied to /public/pdf.worker.min.js
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 export type AnnotationType = "tick" | "cross" | "text" | "circle" | "underline" | "pen";
 
@@ -30,6 +31,7 @@ interface AnnotatablePDFViewerProps {
   onAnnotationsChange: (annotations: Annotation[]) => void;
   activeTool?: AnnotationType | "cursor";
   readOnly?: boolean;
+  externalError?: string | null;
 }
 
 // Sub-component to handle page visibility for virtualization
@@ -104,13 +106,30 @@ function PageWrapper({
   );
 }
 
-export function AnnotatablePDFViewer({ url, annotations, onAnnotationsChange, activeTool = "cursor", readOnly = false }: AnnotatablePDFViewerProps) {
+export function AnnotatablePDFViewer({ 
+  url, 
+  annotations, 
+  onAnnotationsChange, 
+  activeTool = "cursor", 
+  readOnly = false,
+  externalError = null
+}: AnnotatablePDFViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [zoom, setZoom] = useState(1.1); // Slightly higher default zoom for precision
   const [isHovering, setIsHovering] = useState(false);
   const [visiblePage, setVisiblePage] = useState(0);
   
   const containerRef = useRef<HTMLDivElement>(null);
+  const [workerError, setWorkerError] = useState<string | null>(null);
+
+  // Diagnostic check for worker initialization
+  useEffect(() => {
+    if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+       console.error("[PDF_VIEWER] GlobalWorkerOptions.workerSrc is missing");
+       setWorkerError("Worker configuration missing");
+    }
+  }, []);
+
 
   const onVisible = useCallback((index: number) => {
     setVisiblePage(index);
@@ -119,6 +138,7 @@ export function AnnotatablePDFViewer({ url, annotations, onAnnotationsChange, ac
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
   }
+
 
   const handlePageClick = (e: React.MouseEvent<HTMLDivElement>, pageNum: number) => {
     if (readOnly || activeTool === "cursor") return;
@@ -156,7 +176,7 @@ export function AnnotatablePDFViewer({ url, annotations, onAnnotationsChange, ac
   };
 
   const pdfOptions = useMemo(() => ({
-    cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+    cMapUrl: '/cmaps/',
     cMapPacked: true,
     disableAutoFetch: false,
     disableStream: false,
@@ -174,8 +194,12 @@ export function AnnotatablePDFViewer({ url, annotations, onAnnotationsChange, ac
             file={url}
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={(error) => {
-              console.error("PDF Load Error:", error);
-              setNumPages(0); // Trigger error state
+              console.error("[PDF_VIEWER] Document Load Error:", error);
+              setNumPages(0);
+            }}
+            onSourceError={(error) => {
+              console.error("[PDF_VIEWER] Source Error (Worker likely failed):", error);
+              setWorkerError("PDF engine failed to initialize (Worker setup error)");
             }}
             options={pdfOptions}
             loading={
@@ -192,8 +216,14 @@ export function AnnotatablePDFViewer({ url, annotations, onAnnotationsChange, ac
             error={
                <div className="p-10 text-center text-red-100 bg-red-950/20 rounded-2xl border border-red-500/10 max-w-sm shadow-2xl">
                  <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-500" />
-                 <p className="font-semibold text-sm">Asset load error</p>
-                 <p className="text-[10px] opacity-60 mt-2 leading-relaxed">Could not retrieve the digital script. Ensure secure storage permissions are valid.</p>
+                 <p className="font-semibold text-sm">
+                   {workerError ? "PDF Engine Failure" : "Asset load error"}
+                 </p>
+                 <p className="text-[10px] opacity-60 mt-2 leading-relaxed">
+                   {workerError 
+                    ? `The rendering engine could not be initialized locally: ${workerError}. Check browser console.` 
+                    : "Could not retrieve the digital script. Ensure secure storage permissions are valid."}
+                 </p>
                </div>
             }
           >

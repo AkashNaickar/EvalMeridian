@@ -13,11 +13,23 @@ import {
   AlertTriangle, Check, Settings2, PanelRightClose, PanelRightOpen, 
   HelpCircle, Maximize, Columns, LayoutTemplate,
   Cloud, CloudLightning, CheckSquare, Columns2,
-  MousePointer2, Type, Pen, Eraser, MousePointerClick, Flag, X
+  MousePointer2, Type, Pen, Eraser, MousePointerClick, Flag, X,
+  LogOut, User as UserIcon, Settings
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/utils/supabase/client";
 import type { Annotation, AnnotationType } from "@/components/dashboard/AnnotatablePDFViewer";
 import dynamic from 'next/dynamic';
@@ -52,6 +64,20 @@ const AnnotatablePDFViewer = dynamic(
 export default function EvaluationCanvas() {
   const params = useParams();
   const router = useRouter();
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      router.push("/login");
+    } catch (error: any) {
+      toast.error("Failed to logout: " + error.message);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+  const { role, logout } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const scriptId = params.id as string;
 
   const [isLoading, setIsLoading] = useState(true);
@@ -100,28 +126,44 @@ export default function EvaluationCanvas() {
     async function fetchScriptAndResources() {
       setIsLoading(true);
       
-      // Helper to extract relative storage path from any URL or path string
-      const getRelativePath = (input: string) => {
+      // Helper to extract relative storage path and normalize for createSignedUrl
+      const normalizeStoragePath = (input: string, bucketName: string) => {
         if (!input) return "";
-        // If it's already a relative path (doesn't start with http), return it
-        if (!input.startsWith('http')) return input;
-        
-        // If it's a Supabase storage URL, extract the part after the bucket name
-        // Pattern: .../storage/v1/object/public/bucket_name/path/to/file
-        try {
-          const url = new URL(input);
-          const parts = url.pathname.split('/');
-          const objectIndex = parts.indexOf('object');
-          if (objectIndex !== -1 && parts.length > objectIndex + 3) {
-            // objectIndex + 1 is 'public' or 'authenticated'
-            // objectIndex + 2 is the bucket name
-            // Everything after that is the path
-            return parts.slice(objectIndex + 3).join('/');
+        let path = input;
+
+        // 1. Remove full Supabase storage URL if present
+        if (path.startsWith('http')) {
+          try {
+            const url = new URL(path);
+            const searchStr = `/object/public/${bucketName}/`;
+            const authSearchStr = `/object/authenticated/${bucketName}/`;
+            
+            if (url.pathname.includes(searchStr)) {
+              path = url.pathname.split(searchStr)[1];
+            } else if (url.pathname.includes(authSearchStr)) {
+              path = url.pathname.split(authSearchStr)[1];
+            } else {
+              // Fallback: extract after the bucket name if it follows the standard pattern
+              const parts = url.pathname.split('/');
+              const bucketIndex = parts.indexOf(bucketName);
+              if (bucketIndex !== -1) {
+                path = parts.slice(bucketIndex + 1).join('/');
+              }
+            }
+          } catch (e) {
+            console.error("[PDF_LOAD] Failed to parse URL for normalization:", e);
           }
-          return input;
-        } catch (e) {
-          return input;
         }
+
+        // 2. Remove leading slash
+        if (path.startsWith('/')) path = path.substring(1);
+
+        // 3. Remove the bucket name if it's accidentally duplicated at the start of the relative path
+        if (path.startsWith(`${bucketName}/`)) {
+          path = path.replace(`${bucketName}/`, '');
+        }
+
+        return path;
       };
 
       try {
@@ -134,25 +176,35 @@ export default function EvaluationCanvas() {
         if (scriptError) throw scriptError;
         
         // Prefer file_path, fallback to file_url
+        const bucket = 'eval_documents';
         let rawPath = script.file_path || script.file_url;
-        let scriptPath = getRelativePath(rawPath);
+        let scriptPath = normalizeStoragePath(rawPath, bucket);
         
-        console.log("[SUPABASE_STORAGE_AUDIT] Script Loading:", { raw: rawPath, extracted: scriptPath });
         
         // Validation: Ensure we have a path to the digital asset
         if (!scriptPath) {
-          setPdfUrls(prev => ({ ...prev, "student-script": { url: null, loading: false, error: "Resource path missing" } }));
+          console.warn("[PDF_LOAD] Script path missing for ID:", scriptId);
+          setPdfUrls(prev => ({ ...prev, "student-script": { url: null, loading: false, error: "Script file path is missing in database" } }));
         } else {
           try {
             const { data, error: signedError } = await supabase.storage
-              .from('eval_documents')
-              .createSignedUrl(scriptPath, 3600); // 1 hour expiry
+              .from(bucket)
+              .createSignedUrl(scriptPath, 3600);
             
-            if (signedError) throw signedError;
+            if (signedError) {
+              const isNotFound = (signedError as any).status === 404 || signedError.message.toLowerCase().includes('not found');
+              console.error("[PDF_LOAD] Supabase Storage Error:", signedError);
+              throw new Error(isNotFound ? "Script file missing from storage" : signedError.message);
+            }
+
+            if (!data?.signedUrl) {
+              throw new Error("No signed URL returned from storage engine");
+            }
+
             setPdfUrls(prev => ({ ...prev, "student-script": { url: data.signedUrl, loading: false, error: null } }));
           } catch (err: any) {
-            console.error("Signed URL Error (Script):", err);
-            setPdfUrls(prev => ({ ...prev, "student-script": { url: null, loading: false, error: `Auth Error: ${err.message}` } }));
+            console.error("[PDF_LOAD] Script Retrieval Failure:", err);
+            setPdfUrls(prev => ({ ...prev, "student-script": { url: null, loading: false, error: err.message } }));
           }
         }
 
@@ -205,18 +257,26 @@ export default function EvaluationCanvas() {
                 return;
               }
 
-              const relativeResourcePath = getRelativePath(task.path);
-              console.log("[SUPABASE_STORAGE_AUDIT] Resource Loading:", { key: task.key, raw: task.path, extracted: relativeResourcePath });
+              const relativeResourcePath = normalizeStoragePath(task.path, bucket);
 
               try {
                 const { data, error } = await supabase.storage
-                  .from('eval_documents')
+                  .from(bucket)
                   .createSignedUrl(relativeResourcePath, 3600);
                 
-                if (error) throw error;
+                if (error) {
+                  const isNotFound = (error as any).status === 404 || error.message.toLowerCase().includes('not found');
+                  console.error(`[PDF_LOAD] ${task.key} storage error:`, error);
+                  throw new Error(isNotFound ? "Resource file missing from storage" : error.message);
+                }
+
+                if (!data?.signedUrl) {
+                   throw new Error("No signed URL returned");
+                }
+
                 setPdfUrls(prev => ({ ...prev, [task.key]: { url: data.signedUrl, loading: false, error: null } }));
               } catch (err: any) {
-                console.error(`Signed URL Error (${task.key}):`, err);
+                console.error(`[PDF_LOAD] ${task.key} total failure:`, err);
                 setPdfUrls(prev => ({ ...prev, [task.key]: { url: null, loading: false, error: err.message } }));
               }
             }));
@@ -573,6 +633,43 @@ export default function EvaluationCanvas() {
               {focusMode ? <PanelRightOpen className="h-4 w-4" /> : <PanelRightClose className="h-4 w-4" />}
             </Button>
           </div>
+
+          <div className="h-4 w-px bg-slate-800" />
+
+          {/* User Account Portal */}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center space-x-2 p-1 rounded-lg hover:bg-slate-800 transition-all outline-none border border-transparent hover:border-slate-700">
+              <Avatar fallback={role?.[0]} className="h-6 w-6 rounded-md bg-blue-600 text-[10px] font-bold" />
+              <div className="hidden lg:block text-left mr-1">
+                <p className="text-[10px] font-bold leading-none text-slate-300 capitalize">{role}</p>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 mt-2">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push(`/${role}/profile`)}>
+                  <UserIcon className="mr-2 h-4 w-4" /> Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push(`/${role}/settings`)}>
+                  <Settings className="mr-2 h-4 w-4" /> Settings
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={handleLogout} 
+                disabled={isLoggingOut}
+                variant="destructive"
+              >
+                {isLoggingOut ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <LogOut className="mr-2 h-4 w-4" />
+                )}
+                {isLoggingOut ? "Logging out..." : "Log out"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
@@ -725,11 +822,13 @@ export default function EvaluationCanvas() {
                 <ResizablePanel minSize={30} maxSize={70} defaultSize={50} className="relative bg-slate-100 dark:bg-slate-950">
                   {pdfUrls["student-script"].url ? (
                     <AnnotatablePDFViewer 
+                      key={pdfUrls["student-script"].url}
                       url={pdfUrls["student-script"].url}
                       annotations={annotations}
                       activeTool={activeTool}
                       onAnnotationsChange={setAnnotations}
-                      readOnly={false} 
+                      readOnly={false}
+                      externalError={pdfUrls["student-script"].error}
                     />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center bg-slate-950 p-10 text-center">
@@ -760,6 +859,7 @@ export default function EvaluationCanvas() {
                        activeTool="cursor"
                        readOnly={true}
                        onAnnotationsChange={() => {}}
+                       externalError={pdfUrls[referenceTab].error}
                      />
                    ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900/50 p-10 text-center">
@@ -775,11 +875,13 @@ export default function EvaluationCanvas() {
               <div className="w-full h-full relative">
                 {activeDocState.url ? (
                   <AnnotatablePDFViewer 
-                    url={activeDocState.url}
+                    key={activeDocState.url}
+                    url={activeDocState.url as string}
                     annotations={annotations}
                     activeTool={activeTool}
                     onAnnotationsChange={setAnnotations}
                     readOnly={activeTab !== "student-script"} 
+                    externalError={activeDocState.error}
                   />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center bg-slate-950 p-20 text-center">
