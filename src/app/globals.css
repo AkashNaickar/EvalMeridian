@@ -33,6 +33,9 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
 
   /* Sidebar Tokens */
   --color-sidebar: var(--sidebar);
@@ -73,10 +76,10 @@
   /* Standardized Stacking Scale */
   --z-sticky: 100;
   --z-popover: 1000;
-  --z-dropdown: 1100;
-  --z-modal: 1200;
-  --z-tooltip: 1300;
-  --z-toast: 1400;
+  --z-dropdown: 2000; /* Increased to ensure it sits above all canvas overlays */
+  --z-modal: 3000;
+  --z-tooltip: 4000;
+  --z-toast: 5000;
 }
 
 :root {
@@ -143,6 +146,9 @@
   --border: oklch(0.28 0.02 240);
   --input: oklch(0.28 0.02 240);
   --ring: oklch(0.94 0.01 240);
+
+  --popover: oklch(0.22 0.02 240);
+  --popover-foreground: var(--text-primary);
 }
 
 @layer base {
@@ -205,4 +211,33 @@
   .z-modal { z-index: var(--z-modal) !important; }
   .z-tooltip { z-index: var(--z-tooltip) !important; }
   .z-toast { z-index: var(--z-toast) !important; }
+
+  /* Premium Minimalist Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    transition: background 0.2s ease;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+    background-clip: padding-box;
+  }
+
+  /* Support for non-webkit browsers */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
 }
