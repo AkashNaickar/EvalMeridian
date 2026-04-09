@@ -1,3 +1,7 @@
+export type UserRole = "admin" | "teacher" | "evaluator" | "student";
+
+export type ScriptStatus = "pending" | "evaluated" | "completed" | "flagged_ufm";
+
 export interface Student {
   id: string;
   roll_number: string;
@@ -16,6 +20,6 @@ export interface UnmappedScript {
   id: string;
   file_url: string;
   roll_number: string | null;
-  status: string;
+  status: ScriptStatus;
   created_at: string;
 }
