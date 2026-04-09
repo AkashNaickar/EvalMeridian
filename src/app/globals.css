@@ -258,4 +258,9 @@
   .glass-surface {
     @apply bg-background/80 backdrop-blur-xl border border-border/40 shadow-premium;
   }
+
+  /* Refined Skeleton Loader */
+  .skeleton-premium {
+    @apply bg-muted/40 animate-pulse duration-[3000ms] rounded-md;
+  }
 }
