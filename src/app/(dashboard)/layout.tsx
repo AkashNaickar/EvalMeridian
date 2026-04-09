@@ -37,7 +37,7 @@ function DashboardLayoutContent({ children, role }: { children: React.ReactNode,
         <main 
           className={cn(
             "flex-1 overflow-y-auto transition-all duration-premium ease-premium",
-            !isCanvas ? "p-4 md:p-8" : "p-0"
+            !isCanvas ? "p-4 sm:p-6 lg:p-8" : "p-0"
           )}
         >
           {children}
