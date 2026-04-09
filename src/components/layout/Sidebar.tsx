@@ -120,7 +120,7 @@ export function Sidebar() {
         <div className="flex h-16 items-center px-4 border-b border-sidebar-border overflow-hidden whitespace-nowrap">
           <Link href="/" className="flex items-center space-x-3 transition-opacity hover:opacity-90 min-w-0">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary text-white shadow-sm">
-              <Layers className="h-5 w-5" />
+              <Layers className="h-5 w-5" strokeWidth={2} />
             </div>
             {!isCollapsed && (
               <span className="text-[19px] font-bold tracking-tight text-white animate-in fade-in slide-in-from-left-2 duration-300">
@@ -160,10 +160,13 @@ export function Sidebar() {
                       {isActive && (
                         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-primary rounded-r-full shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
                       )}
-                      <Icon className={cn(
-                        "h-5 w-5 shrink-0 transition-colors", 
-                        isActive ? "text-primary" : "text-sidebar-foreground/30 group-hover:text-sidebar-foreground/60"
-                      )} />
+                      <Icon 
+                        className={cn(
+                          "h-5 w-5 shrink-0 transition-colors", 
+                          isActive ? "text-primary" : "text-sidebar-foreground/30 group-hover:text-sidebar-foreground/60"
+                        )} 
+                        strokeWidth={2}
+                      />
                       {!isCollapsed && (
                         <span className="animate-in fade-in slide-in-from-left-1 duration-300">
                           {link.name}
@@ -208,9 +211,9 @@ export function Sidebar() {
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             className="w-full flex items-center justify-center p-2 rounded-md hover:bg-sidebar-accent/50 text-sidebar-foreground/40 hover:text-white transition-colors border border-transparent hover:border-sidebar-border/30"
           >
-            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : (
+            {isCollapsed ? <ChevronRight className="h-4 w-4" strokeWidth={2.5} /> : (
               <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest">
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4" strokeWidth={2.5} />
                 <span>Collapse</span>
               </div>
             )}
