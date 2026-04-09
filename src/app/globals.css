@@ -80,6 +80,10 @@
   --z-modal: 3000;
   --z-tooltip: 4000;
   --z-toast: 5000;
+
+  /* Motion Tokens */
+  --duration-premium: 250ms;
+  --ease-premium: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 :root {

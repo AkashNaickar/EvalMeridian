@@ -114,7 +114,7 @@ export function Sidebar() {
     <TooltipProvider delay={100}>
       <aside 
         style={{ width: "var(--sidebar-width)" }}
-        className="h-full border-r border-sidebar-border bg-sidebar flex flex-col flex-shrink-0 transition-[width] duration-250 ease-in-out z-20"
+        className="h-full border-r border-sidebar-border bg-sidebar flex flex-col flex-shrink-0 transition-[width] duration-premium ease-premium z-20"
       >
         {/* Brand Header */}
         <div className="flex h-16 items-center px-4 border-b border-sidebar-border overflow-hidden whitespace-nowrap">

@@ -22,8 +22,11 @@ function DashboardLayoutContent({ children, role }: { children: React.ReactNode,
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-slate-50">
-      <Header />
+    <div className={cn(
+      "flex h-screen flex-col overflow-hidden",
+      isCanvas ? "bg-slate-950 dark" : "bg-slate-50"
+    )}>
+      {!isCanvas && <Header />}
       <MobileDrawer groups={navGroups} />
       <div className="flex flex-1 overflow-hidden relative z-0">
         {!isCanvas && (
@@ -33,7 +36,7 @@ function DashboardLayoutContent({ children, role }: { children: React.ReactNode,
         )}
         <main 
           className={cn(
-            "flex-1 overflow-y-auto transition-all duration-250 ease-in-out",
+            "flex-1 overflow-y-auto transition-all duration-premium ease-premium",
             !isCanvas ? "p-4 md:p-8" : "p-0"
           )}
         >
