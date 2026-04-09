@@ -244,4 +244,9 @@
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
   }
+
+  /* Interactive Elevation */
+  .hover-lift {
+    @apply transition-all duration-premium ease-premium hover:-translate-y-0.5 hover:shadow-premium;
+  }
 }

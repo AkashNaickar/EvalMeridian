@@ -74,7 +74,7 @@ export default function EvaluatorDashboard() {
 
       {/* KPI Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="hover:border-primary/20 transition-colors">
+        <Card className="hover-lift hover:border-primary/20 transition-all">
           <CardHeader className="flex flex-row items-center justify-between pb-2 bg-secondary/10">
             <CardTitle className="text-label-text text-text-muted font-bold tracking-tight uppercase">Pending markings</CardTitle>
             <Play className="h-4 w-4 text-amber-500" />
