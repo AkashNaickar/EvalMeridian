@@ -197,6 +197,10 @@
   button, h3, h4, span:not(.force-upper), label {
     text-transform: none;
   }
+  
+  button {
+    @apply transition-transform active:scale-[0.98] duration-150;
+  }
 }
 
 @layer utilities {
