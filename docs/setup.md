@@ -9,7 +9,7 @@
 ## 1. Clone and Install
 
 ```bash
-git clone https://github.com/Akash-Naickar/EvalMeridian.git
+git clone https://github.com/AkashNaickar/EvalMeridian.git
 cd EvalMeridian
 npm install
 ```
@@ -35,14 +35,16 @@ Both variables are prefixed with `NEXT_PUBLIC_` because the Supabase client runs
 
 Run the SQL files in `supabase/migrations/` against your Supabase project's SQL Editor, in filename order:
 
-1. `20260312_student_mapping.sql`
-2. `20260313_enhanced_mapping.sql`
-3. `20260313_operations_workflow.sql`
-4. `20260313_production_security_audit.sql`
-5. `20260313_student_auth_extension.sql`
-6. `20260313_teacher_resource_fix.sql`
+1. `20260311_base_schema.sql` — core tables (`profiles`, `exams`, `scripts`, `resources`), triggers, realtime
+2. `20260312_student_mapping.sql`
+3. `20260313_enhanced_mapping.sql`
+4. `20260313_operations_workflow.sql`
+5. `20260313_production_security_audit.sql`
+6. `20260313_student_auth_extension.sql`
+7. `20260313_teacher_resource_fix.sql`
+8. `20260314_storage_eval_documents.sql` — private `eval_documents` storage bucket and policies
 
-These migrations create the required tables, constraints, RLS policies, and functions.
+These migrations create the tables, constraints, RLS policies, functions, and storage bucket. The base schema must run first; the Phase 11-17 migrations alter the tables it creates.
 
 ### Required Tables
 
@@ -67,7 +69,7 @@ For local testing, the scripts in `docs/sql/` can help set up test accounts:
 
 ## 4. Supabase Storage
 
-Create a storage bucket named **`eval_documents`** in your Supabase dashboard (Storage → New Bucket).
+The `20260314_storage_eval_documents.sql` migration creates the private **`eval_documents`** bucket and its access policies, so no manual dashboard step is required when you apply the migrations above.
 
 This bucket stores:
 - Uploaded answer script PDFs

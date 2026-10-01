@@ -1,6 +1,6 @@
 # EvalMeridian
 
-[![CI](https://github.com/Akash-Naickar/EvalMeridian/actions/workflows/ci.yml/badge.svg)](https://github.com/Akash-Naickar/EvalMeridian/actions/workflows/ci.yml)
+[![CI](https://github.com/AkashNaickar/EvalMeridian/actions/workflows/ci.yml/badge.svg)](https://github.com/AkashNaickar/EvalMeridian/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 An on-screen evaluation system for academic institutions. Digitizes the physical exam marking workflow — from scanning answer scripts to assigning evaluators to releasing results — into a single web application.
@@ -63,7 +63,6 @@ src/
 │   │   ├── evaluator/        # Evaluator dashboard + canvas/[id] marking workspace
 │   │   ├── teacher/          # Teacher dashboard, resources, results
 │   │   └── student/          # Student dashboard + results
-│   ├── api/                  # API routes (PDF proxy)
 │   ├── login/                # Authentication page
 │   └── layout.tsx            # Root layout (AuthProvider, theme, fonts)
 ├── components/
@@ -93,7 +92,7 @@ src/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Akash-Naickar/EvalMeridian.git
+   git clone https://github.com/AkashNaickar/EvalMeridian.git
    cd EvalMeridian
    ```
 
@@ -114,11 +113,11 @@ src/
 
 4. **Set up the database**
 
-   Run the migration files in `supabase/migrations/` against your Supabase project in chronological order. These create the required tables (`profiles`, `exam_sessions`, `scripts`, `students`, `resources`, `exams`) and RLS policies.
+   Run the migration files in `supabase/migrations/` against your Supabase project in filename order. `20260311_base_schema.sql` creates the core tables (`profiles`, `exams`, `scripts`, `resources`); the later migrations add student mapping, operations sessions, RLS hardening, and the storage bucket. `20260314_storage_eval_documents.sql` creates the private `eval_documents` bucket and its access policies, so you do not need to create it by hand.
 
-5. **Configure Supabase Storage**
+5. **Create user accounts**
 
-   Create a storage bucket named `eval_documents` in your Supabase dashboard. This bucket stores uploaded answer scripts, question papers, and marking schemes.
+   Add users through Supabase Auth, then insert a matching row in `profiles` with their role. The migrations alone do not create accounts.
 
 6. **Start the dev server**
    ```bash
