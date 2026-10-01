@@ -86,6 +86,15 @@
   --ease-premium: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Motion utilities (Tailwind v4 does not map --duration-* theme keys to
+   duration-* utilities, so define them explicitly). */
+@utility duration-premium {
+  transition-duration: 250ms;
+}
+@utility ease-premium {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 :root {
   /* Neutral Palette: Premium Restraint */
   --background: oklch(0.99 0.002 240);
@@ -203,11 +212,11 @@
   }
 }
 
+@utility shadow-premium {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.02), 0 1px 2px -1px rgb(0 0 0 / 0.02);
+}
+
 @layer utilities {
-  .shadow-premium {
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.02), 0 1px 2px -1px rgb(0 0 0 / 0.02);
-  }
-  
   .container-admin {
     @apply max-w-7xl mx-auto px-6 lg:px-8;
   }
