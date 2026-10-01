@@ -84,14 +84,14 @@ export function MappingRunner({ unmappedCount, sessionId, onSuccess }: MappingRu
 
       let mapped = 0;
       let unmapped = 0;
-      let ambiguous = 0;
+      const ambiguous = 0;
       let errors = 0;
       
       const { data: { user } } = await supabase.auth.getUser();
 
       // 4. Update scripts
       const promises = scriptsWithIntent.map(async (script) => {
-        let rollToMatch = script.intendedRoll;
+        const rollToMatch = script.intendedRoll;
         
         if (rollToMatch) {
           const studentId = studentMap.get(rollToMatch);

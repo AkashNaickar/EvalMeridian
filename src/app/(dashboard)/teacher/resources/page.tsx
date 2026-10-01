@@ -250,7 +250,7 @@ export default function TeacherResourcesPage() {
       <div className="p-6 rounded-lg border border-border/50 bg-secondary/5">
          <h4 className="text-[11px] font-bold text-text-muted uppercase tracking-[0.1em] mb-2">Protocol Requirement</h4>
          <p className="text-caption text-text-secondary leading-relaxed font-medium">
-           Ensuring PDFs are "Optimized" (Linearized) improves the evaluator experience by allowing page-by-page loading on high-latency connections. 
+           Ensuring PDFs are &quot;Optimized&quot; (Linearized) improves the evaluator experience by allowing page-by-page loading on high-latency connections. 
            Unoptimized files are still accepted but may experience slower rendering during high-load evaluation sessions.
          </p>
       </div>

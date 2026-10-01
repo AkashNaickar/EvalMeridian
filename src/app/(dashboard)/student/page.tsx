@@ -88,7 +88,7 @@ export default function StudentDashboard() {
               <div className="space-y-1.5">
                 <h3 className="text-body-text font-bold text-text-primary">Official marklist generation</h3>
                 <p className="text-caption text-text-secondary leading-relaxed font-medium">
-                  Final marklists are generated after the entire batch evaluation is completed and verified by the Dean's office. 
+                  Final marklists are generated after the entire batch evaluation is completed and verified by the Dean&apos;s office. 
                   If you notice any discrepancies in the released marks, please contact the controller of examinations.
                 </p>
               </div>
