@@ -113,7 +113,7 @@ export default function ScriptsInventoryPage() {
       for (const script of unmapped) {
         // ALWAYS extract from file_path or original_filename to ensure accuracy against manual edits
         const sourceName = script.original_filename || (script.file_path ? script.file_path.split('/').pop()! : "");
-        let rollToMatch = extractRollNumber(sourceName) || script.roll_number;
+        const rollToMatch = extractRollNumber(sourceName) || script.roll_number;
 
         if (!rollToMatch) {
           // Still no roll number, mark as error

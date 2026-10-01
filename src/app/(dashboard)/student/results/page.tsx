@@ -127,7 +127,7 @@ export default function StudentResultsPage() {
                   <div className="px-6 pb-6 pt-0">
                     <div className="bg-secondary/20 rounded-md p-4 space-y-2 border border-border/5 group-hover:bg-secondary/30 transition-colors">
                       <p className="text-caption text-text-secondary leading-relaxed font-semibold italic">
-                        "{result.comments}"
+                        &quot;{result.comments}&quot;
                       </p>
                       <p className="text-[9px] font-bold text-text-muted uppercase tracking-wider">— Official feedback</p>
                     </div>

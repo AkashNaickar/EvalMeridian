@@ -130,7 +130,7 @@ export default function ExamsPage() {
             <DialogHeader>
               <DialogTitle>Create New Exam</DialogTitle>
               <DialogDescription>
-                Enter the details of the new examination. Click save when you're done.
+                Enter the details of the new examination. Click save when you&apos;re done.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -217,7 +217,7 @@ export default function ExamsPage() {
             ) : exams.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  No exams found. Click "Create Exam" to get started.
+                  No exams found. Click &quot;Create Exam&quot; to get started.
                 </TableCell>
               </TableRow>
             ) : (

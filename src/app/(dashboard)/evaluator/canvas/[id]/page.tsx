@@ -177,8 +177,8 @@ export default function EvaluationCanvas() {
         
         // Prefer file_path, fallback to file_url
         const bucket = 'eval_documents';
-        let rawPath = script.file_path || script.file_url;
-        let scriptPath = normalizeStoragePath(rawPath, bucket);
+        const rawPath = script.file_path || script.file_url;
+        const scriptPath = normalizeStoragePath(rawPath, bucket);
         
         
         // Validation: Ensure we have a path to the digital asset

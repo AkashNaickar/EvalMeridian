@@ -1,5 +1,8 @@
 # EvalMeridian
 
+[![CI](https://github.com/AkashNaickar/EvalMeridian/actions/workflows/ci.yml/badge.svg)](https://github.com/AkashNaickar/EvalMeridian/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 An on-screen evaluation system for academic institutions. Digitizes the physical exam marking workflow — from scanning answer scripts to assigning evaluators to releasing results — into a single web application.
 
 ## Why This Exists
@@ -60,7 +63,6 @@ src/
 │   │   ├── evaluator/        # Evaluator dashboard + canvas/[id] marking workspace
 │   │   ├── teacher/          # Teacher dashboard, resources, results
 │   │   └── student/          # Student dashboard + results
-│   ├── api/                  # API routes (PDF proxy)
 │   ├── login/                # Authentication page
 │   └── layout.tsx            # Root layout (AuthProvider, theme, fonts)
 ├── components/
@@ -90,7 +92,7 @@ src/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Akash-Naickar/EvalMeridian.git
+   git clone https://github.com/AkashNaickar/EvalMeridian.git
    cd EvalMeridian
    ```
 
@@ -111,11 +113,11 @@ src/
 
 4. **Set up the database**
 
-   Run the migration files in `supabase/migrations/` against your Supabase project in chronological order. These create the required tables (`profiles`, `exam_sessions`, `scripts`, `students`, `resources`, `exams`) and RLS policies.
+   Run the migration files in `supabase/migrations/` against your Supabase project in filename order. `20260311_base_schema.sql` creates the core tables (`profiles`, `exams`, `scripts`, `resources`); the later migrations add student mapping, operations sessions, RLS hardening, and the storage bucket. `20260314_storage_eval_documents.sql` creates the private `eval_documents` bucket and its access policies, so you do not need to create it by hand.
 
-5. **Configure Supabase Storage**
+5. **Create user accounts**
 
-   Create a storage bucket named `eval_documents` in your Supabase dashboard. This bucket stores uploaded answer scripts, question papers, and marking schemes.
+   Add users through Supabase Auth, then insert a matching row in `profiles` with their role. The migrations alone do not create accounts.
 
 6. **Start the dev server**
    ```bash
@@ -133,6 +135,16 @@ For detailed setup instructions, see [docs/setup.md](docs/setup.md).
 | `npm run build` | Create a production build |
 | `npm run start` | Serve the production build |
 | `npm run lint` | Run ESLint |
+| `npm run typecheck` | Run TypeScript type checking (`tsc --noEmit`) |
+| `npm run test` | Run Vitest unit tests |
+| `npm run test:e2e` | Run Playwright smoke tests (builds and serves the app) |
+
+## Testing
+
+- **Unit tests** ([Vitest](https://vitest.dev/)) cover the pure logic in `src/utils/` — roster CSV parsing/validation and roll-number normalization/matching. Run with `npm run test -- --run`.
+- **Smoke tests** ([Playwright](https://playwright.dev/)) verify the main route flow: unauthenticated visitors are redirected to `/login` and the login page renders. Run with `npm run test:e2e` (starts a production build on port 3000 automatically).
+
+CI runs lint, typecheck, unit tests, build, and the Playwright smoke suite on every push and pull request.
 
 ## Authentication & Roles
 
@@ -145,7 +157,12 @@ Authentication is handled by Supabase Auth (email/password). On sign-in, the app
 | `teacher` | `/teacher` | Course overview, resource management, results |
 | `student` | `/student` | Personal results, evaluation status |
 
-Unauthenticated users are redirected to `/login`. Route protection is handled at the dashboard layout level via `AuthContext`.
+Unauthenticated users are redirected to `/login`. Route protection is enforced in two layers:
+
+1. **Server-side middleware** (`src/middleware.ts`) — validates the Supabase session on every request via `@supabase/ssr` and redirects unauthenticated traffic to `/login` before any page renders.
+2. **Client-side layout guard** (`AuthContext` + dashboard layout) — resolves the user's role and routes them to the correct dashboard.
+
+Role-based data access is enforced by Row Level Security policies in Supabase.
 
 ## Database
 
@@ -169,15 +186,18 @@ See [docs/architecture.md](docs/architecture.md) for detailed diagrams covering 
 This is an active development project. Known limitations:
 
 - Teacher and Student dashboards have limited dynamic data (some KPI values are static placeholders)
-- No middleware-level route protection (auth guarding is client-side)
-- No automated test suite
 - Admin dashboard KPIs use static demo data
 - No pagination on large data tables
+- `@typescript-eslint/no-explicit-any` and `react-hooks/set-state-in-effect` are tracked as lint warnings (pre-existing patterns, being fixed progressively)
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on branch naming, commit conventions, and the pull request process.
 
+## Security
+
+See [SECURITY.md](SECURITY.md) for how to report vulnerabilities privately.
+
 ## License
 
-License not yet specified. Contact the repository owner for usage terms.
+Released under the [MIT License](LICENSE).
